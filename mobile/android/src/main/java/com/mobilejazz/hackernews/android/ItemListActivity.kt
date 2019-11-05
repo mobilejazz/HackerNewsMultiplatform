@@ -50,6 +50,6 @@ class ItemListActivity : AppCompatActivity(), ItemListPresenter.View {
 
     override fun onEventNavigateTo(item: Item) {
         Log.d("itemlist", "Navigate to: $item")
-        //startActivity(ItemDetailActivity.getIntent(this, it))
+        startActivity(ItemDetailActivity.getIntent(this, item))
     }
 }

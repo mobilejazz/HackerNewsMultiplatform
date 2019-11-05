@@ -10,44 +10,35 @@ import UIKit
 import HackerNewsCore
 
 class ItemDetailViewController: UITableViewController, ItemDetailPresenterView {
+    
     private lazy var presenter : ItemDetailPresenter = ItemDetailDefaultPresenter(view: self)
     
-    var item : Item! {
-        didSet {
-            self.title = item.title
-        }
-    }
+    // The item Id that will be passed by the previous controlelr
+    var itemId : Int32?
     
-    var comments: [Item] = []
+    private var item : Item! {
+        didSet { self.title = item.title }
+    }
+    private var kids: [Item] = []
     
     // MARK: ItemDetailPresenterView
     
-    func onEventDisplay(comments: [Item]) {
-        self.comments = comments
-        
-        self.tableView.refreshControl?.endRefreshing()
-        DispatchQueue.main.async {
-            self.tableView.reloadData()
-        }
+    func onEventDisplay(item: Item, kids: [Item]) {
+        self.item = item
+        self.kids = kids
+        self.tableView.reloadData()
     }
     
     // MARK: ViewController
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        tableView.refreshControl = UIRefreshControl()
-        tableView.refreshControl?.addTarget(self, action: #selector(pullToRefresh(sender:)), for: .valueChanged)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        presenter.onAppearWith(item: item)
-    }
-    
-    // Using @objc as this method is referenced inside a #selector call
-    @objc func pullToRefresh(sender: UIRefreshControl) {
-        presenter.onActionRefresh(item: item)
+        guard let itemId = itemId else { fatalError("Missing item id") }
+        presenter.onAppearWith(itemId: itemId)
     }
 
     // MARK: - Table view data source
@@ -61,7 +52,7 @@ class ItemDetailViewController: UITableViewController, ItemDetailPresenterView {
         case 0:
             return item == nil ? 0 : 1
         case 1:
-            return comments.count
+            return kids.count
         default:
             return 0
         }
@@ -76,7 +67,7 @@ class ItemDetailViewController: UITableViewController, ItemDetailPresenterView {
             cell.byLabel.text = "by @\(item.by)"
             cell.contentLabel.attributedText = item.attributtedText()
         case 1:
-            let comment = comments[indexPath.row]
+            let comment = kids[indexPath.row]
             cell.titleLabel.text = comment.title
             cell.byLabel.text = "by @\(comment.by)"
             cell.contentLabel.attributedText = comment.attributtedText()

@@ -80,7 +80,7 @@ class ItemListViewController: UITableViewController, ItemListPresenterView {
         if segue.identifier == "segue.item.detail" {
             guard let item = sender as? Item else { fatalError() }
             guard let vc = segue.destination as? ItemDetailViewController else { fatalError() }
-            vc.item = item
+            vc.itemId = item.id
         }
     }
 }
