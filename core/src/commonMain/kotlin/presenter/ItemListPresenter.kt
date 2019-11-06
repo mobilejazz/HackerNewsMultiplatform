@@ -1,5 +1,16 @@
 package com.mobilejazz.common.presenter
+
 import com.mobilejazz.common.model.Item
+import io.ktor.client.HttpClient
+import io.ktor.client.features.json.JsonFeature
+import io.ktor.client.features.json.serializer.KotlinxSerializer
+import io.ktor.client.request.get
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
+import kotlinx.serialization.list
+import kotlinx.serialization.serializer
 
 interface ItemListPresenter {
 
@@ -14,14 +25,29 @@ interface ItemListPresenter {
 }
 
 class ItemListDefaultPresenter(val view: ItemListPresenter.View) : ItemListPresenter {
+
+    private val baseUrl = "https://hacker-news.firebaseio.com/v0"
+
     override fun onAppear() {
-        // TODO: fetch AskStories data
-        view.onEventDisplay(listOf(
-            Item(1,"Jose Luis Franconetti", "Neque porro quisquam est qui dolorem", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur fermentum facilisis odio, a porttitor mi commodo id. Aliquam finibus leo sed tempus vestibulum. Pellentesque tempus ante lectus, at condimentum purus imperdiet malesuada. Ut quis semper arcu, sit amet placerat elit. Nam at mi ante. Mauris ullamcorper at elit in efficitur. Aliquam nec metus urna. Maecenas cursus venenatis mi vel dictum. Integer at condimentum tortor, et pellentesque felis. Duis a massa molestie, porttitor urna non, commodo quam. Sed non facilisis odio, at tristique mauris. Quisque volutpat diam eu nunc rhoncus hendrerit. Cras turpis turpis, blandit ut ipsum et, iaculis commodo metus. Praesent aliquam ut risus at tincidunt.", emptyList()),
-            Item(2,"Joan Martin", "Duis a massa molestie", "Duis facilisis dolor nec erat efficitur eleifend. Aliquam ac tellus nec lectus ullamcorper auctor vel vel lacus. Nulla at euismod augue. Vestibulum vel egestas massa, at laoreet eros. Duis fermentum ligula felis. Quisque ornare nulla ut orci tristique, eleifend viverra mi tincidunt. Fusce tincidunt interdum lorem, sed semper mauris tincidunt vitae. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Donec venenatis rhoncus dolor, vel maximus neque iaculis id. Aliquam viverra elementum elit, et posuere tortor sollicitudin at. In hac habitasse platea dictumst. Interdum et malesuada fames ac ante ipsum primis in faucibus. In maximus, lacus id ultricies consequat, urna neque pellentesque sem, at suscipit leo sapien ac augue.", emptyList()),
-            Item(3,"Fran Montiel", "Venenatis rhoncus dolor", "Ut nulla ante, rhoncus in lorem et, laoreet euismod lorem. Fusce feugiat molestie est sit amet venenatis. Suspendisse molestie facilisis mi in tempor. Sed elit tortor, pharetra vel sapien ut, maximus maximus velit. Duis ut metus vitae nulla iaculis dictum. Suspendisse imperdiet viverra tincidunt. Nullam rutrum a velit vel condimentum. Aenean volutpat nisi pulvinar enim euismod, sit amet fringilla justo efficitur. Vestibulum nec augue pharetra, maximus dolor eu, sodales tellus. Mauris congue efficitur vehicula. Suspendisse orci lorem, rutrum et posuere sed, finibus eu leo.", emptyList()),
-            Item(4,"Borja Arias", "Malesuada elementum tellus", "Fusce pellentesque erat sed mi tincidunt, sit amet finibus nisl vestibulum. Mauris malesuada elementum tellus, at porttitor neque ornare ac. Nam ultricies ornare lacinia. Donec tempor porta metus, iaculis dictum lectus pellentesque vitae. Duis et semper neque. Aliquam aliquet felis eu leo faucibus mollis. Donec id venenatis mauris, in suscipit sem. Nam molestie, dolor sit amet mollis ornare, dolor dolor consectetur ipsum, in eleifend mi justo a eros. Vivamus mollis luctus mauris a accumsan. Ut vulputate posuere sapien ac laoreet. Vivamus ipsum sem, feugiat eget libero nec, cursus interdum nisi. Mauris eu porta dui. Curabitur in eros sed dolor tempor pharetra. Donec sed vestibulum felis. Morbi hendrerit mauris non ornare rhoncus.", emptyList())
-        ))
+        MainScope().launch {
+
+            val client = HttpClient {
+                install(JsonFeature) {
+                    serializer = KotlinxSerializer(Json(JsonConfiguration.Stable.copy(strictMode = false)))
+                }
+            }
+
+            // Get the content of an URL.
+            val rawStories = client.get<String>("$baseUrl/askstories.json")
+            val parsedStories =
+                Json(JsonConfiguration.Stable.copy(strictMode = false)).parse(Int.serializer().list, rawStories)
+
+
+           val items = parsedStories.map {
+                client.get<Item>("$baseUrl/item/$it.json")
+            }
+            view.onEventDisplay(items)
+        }
     }
 
     override fun onActionDidSelect(item: Item) {
