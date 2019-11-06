@@ -10,7 +10,10 @@ import com.mobilejazz.common.model.Item
 import com.mobilejazz.common.presenter.ItemListDefaultPresenter
 import com.mobilejazz.common.presenter.ItemListPresenter
 import kotlinx.android.synthetic.main.activity_item_list.*
+import kotlin.time.ExperimentalTime
 
+
+@ExperimentalTime
 class ItemListActivity : AppCompatActivity(), ItemListPresenter.View {
 
     private val presenter : ItemListPresenter by lazy {

@@ -6,11 +6,15 @@ import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer
 import io.ktor.client.request.get
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.list
 import kotlinx.serialization.serializer
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 interface ItemListPresenter {
 
@@ -24,6 +28,7 @@ interface ItemListPresenter {
     fun onActionRefresh()
 }
 
+@ExperimentalTime
 class ItemListDefaultPresenter(val view: ItemListPresenter.View) : ItemListPresenter {
 
     private val baseUrl = "https://hacker-news.firebaseio.com/v0"
@@ -33,21 +38,38 @@ class ItemListDefaultPresenter(val view: ItemListPresenter.View) : ItemListPrese
 
             val client = HttpClient {
                 install(JsonFeature) {
-                    serializer = KotlinxSerializer(Json(JsonConfiguration.Stable.copy(strictMode = false)))
+                    serializer =
+                        KotlinxSerializer(Json(JsonConfiguration.Stable.copy(strictMode = false)))
                 }
             }
 
             // Get the content of an URL.
             val rawStories = client.get<String>("$baseUrl/askstories.json")
             val parsedStories =
-                Json(JsonConfiguration.Stable.copy(strictMode = false)).parse(Int.serializer().list, rawStories)
+                Json(JsonConfiguration.Stable.copy(strictMode = false)).parse(
+                    Int.serializer().list,
+                    rawStories
+                )
 
-
-           val items = parsedStories.map {
-                client.get<Item>("$baseUrl/item/$it.json")
+            val time = measureTime {
+                val items = parsedStories.map {
+                    async {
+                        client.getItemDetail(it)
+                    }
+                }
+                view.onEventDisplay(items.awaitAll())
             }
-            view.onEventDisplay(items)
+
+            println("duration: $time")
+
+
         }
+    }
+
+    suspend fun HttpClient.getItemDetail(id: Int): Item {
+        val url = "$baseUrl/item/$id.json"
+        println(url)
+        return this.get<Item>(url)
     }
 
     override fun onActionDidSelect(item: Item) {
