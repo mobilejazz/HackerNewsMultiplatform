@@ -1,8 +1,8 @@
 package com.mobilejazz.common.model
 
-//import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializable
 
-//@Serializable
+@Serializable
 data class Item(
     val id : Int,
     val by : String,

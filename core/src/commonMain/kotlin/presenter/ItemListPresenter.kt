@@ -3,8 +3,8 @@ import com.mobilejazz.common.model.Item
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
-import io.ktor.http.ContentType
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 
 interface ItemListPresenter {
 
@@ -22,9 +22,16 @@ class ItemListDefaultPresenter(val view: ItemListPresenter.View) : ItemListPrese
     override fun onAppear() {
         // TODO: fetch AskStories data
 
-        // https://hacker-news.firebaseio.com/v0//item/\(id).json
-
-        getAskStoriesIds()
+        val scope = MainScope()
+        scope.launch {
+            val ids = getAskStoriesIds()
+            var items = mutableListOf<Item>()
+            for (i in 0..ids.size) {
+                val item = getItem(ids[i])
+                items.add(item)
+            }
+            view.onEventDisplay(items)
+        }
 
         view.onEventDisplay(listOf(
             Item(1,"Jose Luis Franconetti", "Neque porro quisquam est qui dolorem", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur fermentum facilisis odio, a porttitor mi commodo id. Aliquam finibus leo sed tempus vestibulum. Pellentesque tempus ante lectus, at condimentum purus imperdiet malesuada. Ut quis semper arcu, sit amet placerat elit. Nam at mi ante. Mauris ullamcorper at elit in efficitur. Aliquam nec metus urna. Maecenas cursus venenatis mi vel dictum. Integer at condimentum tortor, et pellentesque felis. Duis a massa molestie, porttitor urna non, commodo quam. Sed non facilisis odio, at tristique mauris. Quisque volutpat diam eu nunc rhoncus hendrerit. Cras turpis turpis, blandit ut ipsum et, iaculis commodo metus. Praesent aliquam ut risus at tincidunt.", emptyList()),
@@ -44,14 +51,21 @@ class ItemListDefaultPresenter(val view: ItemListPresenter.View) : ItemListPrese
         onAppear()
     }
 
-    private fun getAskStoriesIds(): List<Int> {
+    private suspend fun getAskStoriesIds(): List<Int> {
         // https://hacker-news.firebaseio.com/v0/askstories.json
-
         val client = HttpClient()
         val result = client.get<String>("https://hacker-news.firebaseio.com/v0/askstories.json")
-
-        println("STRING: $result")
-
+        println("IDS: $result")
         client.close()
+        return emptyList()
+    }
+
+    private suspend fun getItem(id: Int): Item {
+        // https://hacker-news.firebaseio.com/v0/item/$id.json
+        val client = HttpClient()
+        val result = client.get<String>("https://hacker-news.firebaseio.com/v0/item/$id.json")
+        println("ITEM: $result")
+        client.close()
+        return Item(0,"by","title","text",emptyList())
     }
 }
