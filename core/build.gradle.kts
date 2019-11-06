@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
-import javax.lang.model.util.ElementFilter
 
 plugins {
     kotlin("multiplatform")
@@ -35,13 +34,17 @@ kotlin {
         implementation("org.jetbrains.kotlin:kotlin-stdlib")
         implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.2")
         implementation("io.ktor:ktor-client-android:1.2.5")
-//        implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-android")
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.13.0")
         implementation("io.ktor:ktor-client-json-jvm:$ktor_version")
     }
 
     sourceSets["iosMain"].dependencies {
         implementation("io.ktor:ktor-client-ios:1.2.5")
         implementation("io.ktor:ktor-client-json-native:$ktor_version")
+
+        implementation("io.ktor:ktor-client-ios:1.2.5")
+        implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-ios:1.3.2")
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.13.0")
     }
 }
 val packForXcode by tasks.creating(Sync::class) {
