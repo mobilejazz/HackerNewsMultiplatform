@@ -24,6 +24,8 @@ kotlin {
 
     sourceSets["commonMain"].dependencies {
         implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
+        implementation("io.ktor:ktor-client-core:1.2.5")
+        implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2")
         //implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common")
     }
 
